@@ -1,19 +1,20 @@
 {
-  "name": "angular-drywall",
-  "description": "A MEAN stack User Management web app",
+  "name": "server-drywall",
+  "description": "A JWT token authentication based User Management server",
   "version": "0.1.10",
   "keywords": [
-    "angular",
-    "drywall"
+    "server",
+    "drywall",
+    "jwt"
   ],
   "license": "MIT",
   "author": {
-    "name": "Arthur C. Kao",
-    "email": "arthurckao@gmail.com"
+    "name": "Ankit Parashar",
+    "email": "ankitabc12@gmail.com"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/arthurkao/angular-drywall"
+    "url": "https://github.com/ankitiitb1069/server-drywall"
   },
   "scripts": {
     "start": "node app.js",
@@ -29,9 +30,11 @@
     "csurf": "^1.x.x",
     "emailjs": "^0.3.x",
     "express": "^4.12.x",
+    "express-jwt": "^5.1.0",
     "express-session": "^1.x.x",
     "helmet": "^0.9.x",
     "jade": "^1.x.x",
+    "jsonwebtoken": "^7.3.0",
     "method-override": "^2.x.x",
     "mongoose": "4.x.x",
     "morgan": "^1.x.x",

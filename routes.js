@@ -1,5 +1,8 @@
 'use strict';
 
+const expressJwt = require('express-jwt');
+const jwt = require('jsonwebtoken');
+
 var preAuth = require('./service/pre-auth');
 var security = require('./service/security');
 var account = require('./service/account');
@@ -11,22 +14,13 @@ var adminGroup = require('./service/admin/admin-group');
 var adminStatus = require('./service/admin/status');
 var adminCategory = require('./service/admin/category');
 
-function useAngular(req, res, next){
-  res.sendFile(require('path').join(__dirname, './client/dist/index.html'));
-}
 
-function apiEnsureAuthenticated(req, res, next){
-  if(req.isAuthenticated()){
-    return next();
-  }
-  res.set('X-Auth-Required', 'true');
-  //no need to store the originalUrl in session: caller knows the return url
-  //req.session.returnUrl = req.originalUrl;
-  res.status(401).send({errors: ['authentication required']});
-}
+var authenticate = expressJwt({
+  secret: config.secret
+});
 
 function apiEnsureAccount(req, res, next){
-  if(req.user.canPlayRoleOf('account')){
+  if(req.user.account){
     return next();
   }
   res.status(401).send({errors: ['authorization required']});
@@ -36,20 +30,15 @@ function apiEnsureVerifiedAccount(req, res, next){
   if(!req.app.config.requireAccountVerification){
     return next();
   }
-  req.user.isVerified(function(err, flag){
-    if(err){
-      return next(err);
-    }
-    if(flag){
-      return next();
-    }else{
-      return res.status(401).send({errors: ['verification required']});
-    }
-  });
+  if(!req.user.isVerified){
+    return res.status(401).send({errors: ['verification required']});
+  }else if(req.user.isVerified){
+    return next(); 
+  }
 }
 
 function apiEnsureAdmin(req, res, next){
-  if(req.user.canPlayRoleOf('admin')){
+  if(req.user.admin){
     return next();
   }
   res.status(401).send({errors: ['authorization required']});
@@ -68,8 +57,9 @@ exports = module.exports = function(app, passport) {
   app.post('/api/logout', security.logout);
 
   //-----authentication required api-----
-  app.all('/api/account*', apiEnsureAuthenticated);
+  app.all('/api/account*', authenticate);
   app.all('/api/account*', apiEnsureAccount);
+
 
   app.get('/api/account/verification', account.upsertVerification);
   app.post('/api/account/verification', account.resendVerification);
@@ -87,7 +77,7 @@ exports = module.exports = function(app, passport) {
   app.get('/api/account/settings/facebook/disconnect', account.disconnectFacebook);
 
   //-----athorization required api-----
-  app.all('/api/admin*', apiEnsureAuthenticated);
+  app.all('/api/admin*', authenticate);
   app.all('/api/admin*', apiEnsureAdmin);
   app.get('/api/admin', admin.getStats);
 
@@ -150,77 +140,4 @@ exports = module.exports = function(app, passport) {
   //admin > search
   app.get('/api/admin/search', admin.search);
 
-  //******** END OF NEW JSON API ********
-
-  //******** Static routes handled by Angular ********
-  //public
-  app.get('/', useAngular);
-  app.get('/about', useAngular);
-  app.get('/contact', useAngular);
-
-  //sign up
-  app.get('/signup', useAngular);
-
-  //social sign up no-longer needed as user can login with their social account directly
-  //this eliminates one more step (collecting email) before user login
-
-  //login/out
-  app.get('/login', useAngular);
-  app.get('/login/forgot', useAngular);
-  app.get('/login/reset', useAngular);
-  app.get('/login/reset/:email/:token', useAngular);
-
-  //social login
-  app.get('/login/facebook', passport.authenticate('facebook', { callbackURL: 'http://' + app.config.hostname + '/login/facebook/callback', scope: ['email'] }));
-  app.get('/login/facebook/callback', useAngular);
-  app.get('/login/google', passport.authenticate('google', { callbackURL: 'http://' + app.config.hostname + '/login/google/callback', scope: ['profile email'] }));
-  app.get('/login/google/callback', useAngular);
-
-  //account
-  app.get('/account', useAngular);
-
-  //account > verification
-  app.get('/account/verification', useAngular);
-  app.get('/account/verification/:token', useAngular);
-
-  //account > settings
-  app.get('/account/settings', useAngular);
-
-  //account > settings > social
-  app.get('/account/settings/facebook/', passport.authenticate('facebook', { callbackURL: 'http://' + app.config.hostname + '/account/settings/facebook/callback', scope: [ 'email' ]}));
-  app.get('/account/settings/facebook/callback', useAngular);
-  app.get('/account/settings/google/', passport.authenticate('google', { callbackURL: 'http://' + app.config.hostname + '/account/settings/google/callback', scope: ['profile email'] }));
-  app.get('/account/settings/google/callback', useAngular);
-
-  //admin
-  app.get('/admin', useAngular);
-
-  //admin > users
-  app.get('/admin/users', useAngular);
-  app.get('/admin/users/:id', useAngular);
-
-  //admin > administrators
-  app.get('/admin/administrators', useAngular);
-  app.get('/admin/administrators/:id', useAngular);
-
-  //admin > admin groups
-  app.get('/admin/admin-groups', useAngular);
-  app.get('/admin/admin-groups/:id', useAngular);
-
-  //admin > accounts
-  app.get('/admin/accounts', useAngular);
-  app.get('/admin/accounts/:id', useAngular);
-
-  //admin > statuses
-  app.get('/admin/statuses', useAngular);
-  app.get('/admin/statuses/:id', useAngular);
-
-  //admin > categories
-  app.get('/admin/categories', useAngular);
-  app.get('/admin/categories/:id', useAngular);
-
-  //other routes not found nor begin with /api is handled by Angular
-  app.all(/^(?!\/api).*$/, useAngular);
-
-  //******** End OF static routes ********
 };

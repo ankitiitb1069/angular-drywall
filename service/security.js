@@ -2,10 +2,11 @@
 var filterUser = function (user) {
   if (user) {
     return {
-      id: user._id,
+      //id: user._id,
       email: user.email,
       //firstName: user.firstName,
       //lastName: user.lastName,
+      account: !!(user.roles && user.roles.account),
       admin: !!(user.roles && user.roles.admin),
       isVerified: !!(user.roles && user.roles.account && user.roles.account.isVerified && user.roles.account.isVerified === 'yes')
     };
@@ -200,22 +201,29 @@ var socialLogin = function(provider, req, res, next){
       }
       else {
         workflow.user = user;
-        return workflow.emit('logUserIn');
+        return workflow.emit('generateAccessToken');
       }
     });
   });
 
-  workflow.on('logUserIn', function(){
+/*  workflow.on('logUserIn', function(){
 
     req.login(workflow.user, function(err) {
       if (err) {
         return workflow.emit('exception', err);
       }
       workflow.outcome.defaultReturnUrl = workflow.user.defaultReturnUrl();
-      workflow.outcome.user = filterUser(req.user);
-      workflow.emit('response');
+      workflow.user = filterUser(req.user);
+      workflow.emit('generateAccessToken');
     });
-  });
+  });*/
+
+  workflow.on('generateAccessToken', function(){
+    var accessToken = jwt.sign(filterUser(workflow.user), SECRET, {expiresIn: TOKENTIME});
+    workflow.outcome.access_token = accessToken;
+    workflow.outcome.defaultReturnUrl = workflow.user.defaultReturnUrl();
+    workflow.emit('response');
+  });  
 
   workflow.on('linkUser', function(){
     workflow.user[workflow.profile.provider] = {
@@ -491,12 +499,18 @@ var security = {
             if (err) {
               return workflow.emit('exception', err);
             }
-            workflow.outcome.user = filterUser(req.user);
+            workflow.user = filterUser(req.user);
             workflow.outcome.defaultReturnUrl = user.defaultReturnUrl();
-            workflow.emit('response');
+            workflow.emit('generateAccessToken');
           });
         }
       })(req, res);
+    });
+
+    workflow.on('generateAccessToken', function(){
+      var accessToken = jwt.sign(workflow.user, SECRET, {expiresIn: TOKENTIME});
+       workflow.outcome.access_token = accessToken;
+       workflow.emit('response');
     });
 
     workflow.emit('validate');

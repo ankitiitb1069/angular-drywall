@@ -47,25 +47,11 @@ app.use(require('method-override')());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser(config.cryptoKey));
-app.use(session({
-  resave: true,
-  saveUninitialized: true,
-  secret: config.cryptoKey,
-  store: new mongoStore({ url: config.mongodb.uri })
-}));
+
 app.use(passport.initialize());
-app.use(passport.session());
-app.use(csrf({ cookie: { signed: true } }));
 helmet(app);
 
-//response locals
-app.use(function(req, res, next) {
-  res.cookie('_csrfToken', req.csrfToken());
-  res.locals.user = {};
-  res.locals.user.defaultReturnUrl = req.user && req.user.defaultReturnUrl();
-  res.locals.user.username = req.user && req.user.username;
-  next();
-});
+
 
 //global locals
 app.locals.projectName = app.config.projectName;
