@@ -1,7 +1,7 @@
 'use strict';
 
 const expressJwt = require('express-jwt');
-const jwt = require('jsonwebtoken');
+const config = require('./config');
 
 var preAuth = require('./service/pre-auth');
 var security = require('./service/security');

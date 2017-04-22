@@ -1,7 +1,8 @@
 # [Server-Drywall](https://github.com/ankitiitb1069/server-drywall)
 
 
-A jwt token based authentication user system, implemented with [MongoDB](https://www.mongodb.org/), [Express](http://expressjs.com/), and [Node.js](https://nodejs.org/).
+A [JWT](https://github.com/auth0/node-jsonwebtoken) token based authentication user system boilerplate, implemented with [MongoDB](https://www.mongodb.org/), [Express](http://expressjs.com/), and [Node.js](https://nodejs.org/).
+
 Inspired by and forked from [Angular-Drywall](https://github.com/arthurkao/angular-drywall) and [Drywall](https://github.com/jedireza/drywall).
 
 ## Features
@@ -16,7 +17,7 @@ Inspired by and forked from [Angular-Drywall](https://github.com/arthurkao/angul
 
 ## Technology
 
-[Angular-Drywall](http://arthurkao.github.io/angular-drywall)'s backend is pure Node.js RESTful API Server with [JWT](https://github.com/auth0/node-jsonwebtoken) token based authentication .
+[Server-Drywall](http://arthurkao.github.io/angular-drywall)'s backend is pure Node.js RESTful API Server with [JWT](https://github.com/auth0/node-jsonwebtoken) token based authentication .
 
 
 
@@ -78,10 +79,11 @@ $ grunt
 
 Now [Server-Drywall](https://github.com/ankitiitb1069/server-drywall) should be up and running at `http://localhost:3000`.
 
-Use Postman
 Integrate with your favourite Client and Enjoy.
 
+## Usage
 
+Coming Soon..
 
 ## Questions and contributing
 

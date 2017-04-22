@@ -1,4 +1,9 @@
 'use strict';
+
+const jwt = require('jsonwebtoken');
+
+
+
 var filterUser = function (user) {
   if (user) {
     return {
@@ -219,7 +224,7 @@ var socialLogin = function(provider, req, res, next){
   });*/
 
   workflow.on('generateAccessToken', function(){
-    var accessToken = jwt.sign(filterUser(workflow.user), SECRET, {expiresIn: TOKENTIME});
+    var accessToken = jwt.sign(filterUser(workflow.user), req.app.config.secret, {expiresIn: req.app.config.tokenTime});
     workflow.outcome.access_token = accessToken;
     workflow.outcome.defaultReturnUrl = workflow.user.defaultReturnUrl();
     workflow.emit('response');
@@ -508,7 +513,7 @@ var security = {
     });
 
     workflow.on('generateAccessToken', function(){
-      var accessToken = jwt.sign(workflow.user, SECRET, {expiresIn: TOKENTIME});
+      var accessToken = jwt.sign(workflow.user, req.app.config.secret, {expiresIn: req.app.config.tokenTime});
        workflow.outcome.access_token = accessToken;
        workflow.emit('response');
     });
