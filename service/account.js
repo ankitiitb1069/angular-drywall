@@ -28,7 +28,7 @@ var disconnectSocial = function(provider, req, res, next){
   var outcome = {};
   var fieldsToSet = {};
   fieldsToSet[provider] = { id: undefined };
-  req.app.db.models.User.findByIdAndUpdate(req.user.id, fieldsToSet, function (err, user) {
+  req.app.db.models.User.findByOneAndUpdate({email:req.user.email}, fieldsToSet, function (err, user) {
     if (err) {
       outcome.errors = ['error disconnecting user from their '+ provider + ' account'];
       outcome.success = false;
@@ -58,7 +58,7 @@ var connectSocial = function(provider, req, res, next){
   });
 
   workflow.on('findUser', function(){
-    var option = { _id: { $ne: req.user.id } };
+    var option = { email: { $ne: req.user.email } };
     option[provider +'.id'] = workflow.profile.id;
     req.app.db.models.User.findOne(option, function(err, user) {
       if (err) {
@@ -83,7 +83,7 @@ var connectSocial = function(provider, req, res, next){
       profile: workflow.profile
     };
 
-    req.app.db.models.User.findByIdAndUpdate(req.user.id, fieldsToSet, function(err, user) {
+    req.app.db.models.User.findOneAndUpdate({email:req.user.email}, fieldsToSet, function(err, user) {
       if (err) {
         return workflow.emit('exception', err);
       }
@@ -111,7 +111,7 @@ var account = {
     };
 
     var getUserData = function(callback) {
-      req.app.db.models.User.findById(req.user.id, 'username email twitter.id github.id facebook.id google.id tumblr.id').exec(function(err, user) {
+      req.app.db.models.User.findOne({email:req.user.email}, 'username email twitter.id github.id facebook.id google.id tumblr.id').exec(function(err, user) {
         if (err) {
           callback(err, null);
         }
@@ -227,28 +227,13 @@ var account = {
     });
 
     workflow.on('duplicateUsernameCheck', function() {
-      req.app.db.models.User.findOne({ username: req.body.username, _id: { $ne: req.user.id } }, function(err, user) {
+      req.app.db.models.User.findOne({ username: req.body.username, email: { $ne: req.user.email } }, function(err, user) {
         if (err) {
           return workflow.emit('exception', err);
         }
 
         if (user) {
           workflow.outcome.errfor.username = 'username already taken';
-          return workflow.emit('response');
-        }
-
-        workflow.emit('duplicateEmailCheck');
-      });
-    });
-
-    workflow.on('duplicateEmailCheck', function() {
-      req.app.db.models.User.findOne({ email: req.body.email.toLowerCase(), _id: { $ne: req.user.id } }, function(err, user) {
-        if (err) {
-          return workflow.emit('exception', err);
-        }
-
-        if (user) {
-          workflow.outcome.errfor.email = 'email already taken';
           return workflow.emit('response');
         }
 
@@ -267,7 +252,7 @@ var account = {
       };
       var options = { select: 'username email twitter.id github.id facebook.id google.id' };
 
-      req.app.db.models.User.findByIdAndUpdate(req.user.id, fieldsToSet, options, function(err, user) {
+      req.app.db.models.User.findOneAndUpdate({email:req.user.email}, fieldsToSet, options, function(err, user) {
         if (err) {
           return workflow.emit('exception', err);
         }
@@ -280,7 +265,7 @@ var account = {
       if (user.roles.admin) {
         var fieldsToSet = {
           user: {
-            id: req.user.id,
+            id: user.id,
             name: user.username
           }
         };
@@ -301,7 +286,7 @@ var account = {
       if (user.roles.account) {
         var fieldsToSet = {
           user: {
-            id: req.user.id,
+            id: user.id,
             name: user.username
           }
         };
@@ -361,7 +346,7 @@ var account = {
         }
 
         var fieldsToSet = { password: hash };
-        req.app.db.models.User.findByIdAndUpdate(req.user.id, fieldsToSet, function(err, user) {
+        req.app.db.models.User.findOneAndUpdate({email:req.user.email}, fieldsToSet, function(err, user) {
           if (err) {
             return workflow.emit('exception', err);
           }
@@ -457,28 +442,14 @@ var account = {
         return workflow.emit('response');
       }
 
-      workflow.emit('duplicateEmailCheck');
+      workflow.emit('patchUser');
     });
 
-    workflow.on('duplicateEmailCheck', function() {
-      req.app.db.models.User.findOne({ email: req.body.email.toLowerCase(), _id: { $ne: req.user.id } }, function(err, user) {
-        if (err) {
-          return workflow.emit('exception', err);
-        }
-
-        if (user) {
-          workflow.outcome.errfor.email = 'email already taken';
-          return workflow.emit('response');
-        }
-
-        workflow.emit('patchUser');
-      });
-    });
 
     workflow.on('patchUser', function() {
       var fieldsToSet = { email: req.body.email.toLowerCase() };
       var options = { new: true };
-      req.app.db.models.User.findByIdAndUpdate(req.user.id, fieldsToSet, options, function(err, user) {
+      req.app.db.models.User.findOneAndUpdate({email:req.user.email}, fieldsToSet, options, function(err, user) {
         if (err) {
           return workflow.emit('exception', err);
         }
