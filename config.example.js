@@ -1,6 +1,8 @@
 'use strict';
 
 exports.hostname = process.env.hostname || 'localhost';
+exports.secret = "Y0Y0h0n3y$!ngh";
+exports.tokenTime = 24*60*60 // time for token to expire
 exports.port = process.env.PORT || 3000;
 exports.mongodb = {
   uri: process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || '{{MONGO_URI}}'
